@@ -988,7 +988,7 @@ check_multiple_of(_Value, _MultipleOf, State) ->
 %%
 %% @private
 check_required(Value, [_ | _] = Required, State) ->
-    Errors =
+    MissingProps =
         lists:foldl(
             fun(PropertyName, Acc) ->
                 case get_value(PropertyName, Value) of
@@ -996,10 +996,9 @@ check_required(Value, [_ | _] = Required, State) ->
                     _SomeValue -> Acc
                 end
             end, [], Required),
-    case Errors of
-      []  -> State;
-      ErrList ->
-        handle_data_invalid(?missing_required_property, ErrList, State)
+    case MissingProps of
+      [] -> State;
+      _ -> handle_data_invalid(?missing_required_property, MissingProps, State)
     end;
 check_required(_Value, _InvalidRequired, State) ->
     handle_schema_invalid(?wrong_required_array, State).
