@@ -988,14 +988,18 @@ check_multiple_of(_Value, _MultipleOf, State) ->
 %%
 %% @private
 check_required(Value, [_ | _] = Required, State) ->
-  IsValid = lists:all( fun(PropertyName) ->
-                           get_value(PropertyName, Value) =/= ?not_found
-                       end
-                     , Required
-                     ),
-    case IsValid of
-      true  -> State;
-      false -> handle_data_invalid(?missing_required_property, Value, State)
+    Errors =
+        lists:foldl(
+            fun(PropertyName, Acc) ->
+                case get_value(PropertyName, Value) of
+                    ?not_found -> [PropertyName | Acc];
+                    _SomeValue -> Acc
+                end
+            end, [], Required),
+    case Errors of
+      []  -> State;
+      ErrList ->
+        handle_data_invalid(?missing_required_property, ErrList, State)
     end;
 check_required(_Value, _InvalidRequired, State) ->
     handle_schema_invalid(?wrong_required_array, State).
