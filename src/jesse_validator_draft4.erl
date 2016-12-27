@@ -262,8 +262,13 @@ check_value(Property, Value, Attrs, State) ->
   %% Add Property to path
   State1 = add_to_path(State, Property),
   State2 = jesse_schema_validator:validate_with_state(Attrs, Value, State1),
+  State3 =
+    if
+      is_map(State2) -> State2;
+      true -> State1
+    end,
   %% Reset path again
-  remove_last_from_path(State2).
+  remove_last_from_path(State3).
 
 %% @doc 5.5.2. type
 %%
@@ -1021,17 +1026,14 @@ check_multiple_of(_Value, _MultipleOf, State) ->
 %%
 %% @private
 check_required(Value, [_ | _] = Required, State) ->
-    MissingProps =
-        lists:foldl(
-            fun(PropertyName, Acc) ->
-                case get_value(PropertyName, Value) of
-                    ?not_found -> [PropertyName | Acc];
-                    _SomeValue -> Acc
-                end
-            end, [], Required),
-    case MissingProps of
-      [] -> State;
-      _ -> handle_data_invalid(?missing_required_property, MissingProps, State)
+  IsValid = lists:all( fun(PropertyName) ->
+                           get_value(PropertyName, Value) =/= ?not_found
+                       end
+                     , Required
+                     ),
+    case IsValid of
+      true  -> State;
+      false -> handle_data_invalid(?missing_required_property, Value, State)
     end;
 check_required(_Value, _InvalidRequired, State) ->
     handle_schema_invalid(?wrong_required_array, State).
