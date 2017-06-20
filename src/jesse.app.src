@@ -5,6 +5,7 @@
                       , {registered, []}
                       , {applications, [ kernel
                                        , stdlib
+                                       , rfc3339
                                        ]}
                       , {maintainers, [ "for-GET/jesse"
                                       ]}
